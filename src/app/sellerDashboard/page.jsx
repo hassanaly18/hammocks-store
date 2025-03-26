@@ -9,7 +9,7 @@ const SellerDashboard = () => {
     name: "",
     description: "",
     price: "",
-    image_url: "",
+    imageFile: "",
   });
 
   useEffect(() => {
@@ -27,22 +27,56 @@ const SellerDashboard = () => {
   }
 
   async function uploadImage(file) {
-    const filename = `112-${file.name}`;
+    if (!file) {
+      alert("No file selected.");
+      return null;
+    }
+  
+    const filename = `${Date.now()}-${file.name}`;
     const { data, error } = await supabase.storage
       .from("product-images")
       .upload(filename, file);
-
+  
     if (error) {
-      alert(error.message);
-      return;
+      alert("Image upload failed: " + error.message);
+      return null;
     }
-
-    console.log(data);
-    return `${
-      supabase.storage.from("product-images").getPublicUrl(filename).data
-        .publicUrl
-    }`;
+  
+    return supabase.storage.from("product-images").getPublicUrl(filename).data.publicUrl;
   }
+  
+
+  // async function addProduct() {
+  //   if (!newProduct.imageFile) {
+  //     alert("Please upload an image");
+  //     return;
+  //   }
+
+  //   const imageUrl = await uploadImage(newProduct.image_url);
+  //   if (!imageUrl) {
+  //     return;
+  //   }
+
+  //   const productData = { ...newProduct, imageFile: imageUrl };
+  //   delete productData.image_url;
+
+  //   const { data, error } = await supabase
+  //     .from("products")
+  //     .insert([productData]);
+  //   if (error) {
+  //     alert(error.message);
+  //     console.log(error.message);
+  //     console.error(error);
+  //   } else {
+  //     setProducts([...products, data[0]]);
+  //     setNewProduct({
+  //       name: "",
+  //       description: "",
+  //       price: "",
+  //       imageFile: null,
+  //     });
+  //   }
+  // }
 
   async function addProduct() {
     if (!newProduct.imageFile) {
@@ -50,20 +84,25 @@ const SellerDashboard = () => {
       return;
     }
 
-    const imageUrl = await uploadImage(newProduct.image_url);
+    const imageUrl = await uploadImage(newProduct.imageFile); // <-- Use imageFile, not image_url
     if (!imageUrl) {
+      alert("Image upload failed");
       return;
     }
 
-    const productData = { ...newProduct, image_url: imageUrl };
-    delete productData.image_url;
+    const productData = {
+      ...newProduct,
+      image_url: imageUrl, // <-- Use the returned URL
+    };
+
+    delete productData.imageFile; // <-- Remove file object before inserting into DB
 
     const { data, error } = await supabase
       .from("products")
       .insert([productData]);
+
     if (error) {
       alert(error.message);
-      console.log(error.message);
       console.error(error);
     } else {
       setProducts([...products, data[0]]);
@@ -71,7 +110,7 @@ const SellerDashboard = () => {
         name: "",
         description: "",
         price: "",
-        image_url: null,
+        imageFile: null, // Reset imageFile instead of image_url
       });
     }
   }
@@ -128,18 +167,20 @@ const SellerDashboard = () => {
 
         <input
           type="file"
-          placeholder="Image"
           className="border p-2 w-full mb-2 text-gray-600"
-        //   value={newProduct.image_url}
-          onChange={(e) =>
-            setNewProduct({
-              ...newProduct,
-              image_url: e.target.files[0],
-            })
-          }
+          onChange={(e) => {
+            if (e.target.files.length > 0) {
+              setNewProduct({ ...newProduct, imageFile: e.target.files[0] });
+            }
+          }}
         />
 
-        <button className="bg-blue-500 text-white p-2 w-full rounded-lg hover:bg-blue-700" onClick={addProduct}>Add Product</button>
+        <button
+          className="bg-blue-500 text-white p-2 w-full rounded-lg hover:bg-blue-700"
+          onClick={addProduct}
+        >
+          Add Product
+        </button>
       </div>
     </div>
   );
