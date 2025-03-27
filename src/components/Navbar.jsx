@@ -17,6 +17,9 @@ const Navbar = () => {
                 <Link href="/sellerDashboard">
                 <span className='cursor-pointer'>Seller Dashboard</span>
                 </Link>
+                <Link href="/cart">
+                <span className='cursor-pointer'>Cart</span>
+                </Link>
             </div>
         </div>
     </nav>

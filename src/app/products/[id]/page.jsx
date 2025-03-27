@@ -1,13 +1,13 @@
 "use client"
 
 import React, { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useState } from 'react'
 
 const ProductDetails = () => {
     const router = useRouter()
-    const { id } = router.query
+    const { id } = useParams()
     const [product, setProduct] = useState(null)
 
     useEffect(() => {
@@ -31,12 +31,12 @@ const ProductDetails = () => {
     }
 
   return (
-    <div className='min-h-screen p-6 bg-gray-100 flex justify-center'>
-        <div className=''>
-            <img src={product.image_url} alt="" />
-            <h1>{product.name}</h1>
-            <p>{product.description}</p>
-            <p>${product.price}</p>
+    <div className=' p-6 bg-gray-100 flex justify-center'>
+        <div className='bg-white p-6 rounded-lg shadow-md max-w-lg w-full'>
+            <img src={product.image_url} alt="" className='w-full h-64 object-cover rounded-lg'/>
+            <h1 className='text-2xl font-semibold mt-4 text-gray-800'>{product.name}</h1>
+            <p className='text-gray-600 mt-2 text-gray-700'>{product.description}</p>
+            <p className='text-xl font-bold mt-2 text-gray-800'>${product.price}</p>
         </div>
     </div>
   )
