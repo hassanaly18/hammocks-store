@@ -2,10 +2,12 @@
 
 import { supabase } from "@/lib/supabase";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchCart();
@@ -36,6 +38,60 @@ const CartPage = () => {
     } else {
       setCartItems(data);
     }
+  }
+
+  async function completeOrder(){
+    if(cartItems.length ===0){
+      alert("Your cart is empty");
+      return;
+    }
+
+    setLoading(true);
+
+    const user = await supabase.auth.getUser();
+
+    if(!user?.data?.user){
+      alert("Login to complete your order");
+      setLoading(false);
+      return;
+    }
+
+    const totalPrice = cartItems.reduce((acc, item)=>{
+      acc + item.products.price * item.products.quantity
+    })
+
+    //Insert into orders table
+    const {data: order, error: orderError} = await supabase.from("orders").insert([{
+      user_id: user.data.user.id,
+      total_price: 800,
+    }]).select().single();
+
+    if(orderError){
+      alert(orderError.message);
+      setLoading(false);
+      return;
+    }
+
+    const orderItems = cartItems.map((item)=>({
+      order_id:order.id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.products.price,
+    }))
+
+    const {error: orderItemsError} = await supabase.from("order_items").insert(orderItems);
+
+    if(orderItemsError){
+      alert(orderItemsError.message);
+      setLoading(false);
+      return;
+    }
+
+    supabase.from("cart").delete().neq("id", "");
+    setCartItems([]);
+    setLoading(false);
+    alert("Order completed successfully");
+    router.push("/");
   }
 
   async function removeItem(id){
@@ -77,6 +133,9 @@ const CartPage = () => {
                 </button>
               </div>
             ))}
+            <button onClick={completeOrder} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300">
+              {loading ? "Processing..." : "Complete Order"}
+            </button>
           </div>
         )}
       </div>
