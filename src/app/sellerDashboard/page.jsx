@@ -1,5 +1,4 @@
 "use client";
-
 import { supabase } from "@/lib/supabase";
 import React, { useEffect, useState } from "react";
 
@@ -11,20 +10,33 @@ const SellerDashboard = () => {
     price: "",
     imageFile: "",
   });
+  const [orders, setOrders]= useState([]);
 
   useEffect(() => {
-    fetchProducts();
+    // fetchProducts();
+    fetchOrders();
   }, []);
 
-  async function fetchProducts() {
-    const { data, error } = await supabase.from("products").select("*");
+  async function fetchOrders(){
+    const {data, error} = await supabase.from("orders").select("id, user_id, total_price, order_items(product_id ,price)")
 
-    if (error) {
-      alert(error.message);
-    } else {
-      console.log(data);
+    if(error){
+      alert(error.message)
+    }
+    else{
+      setOrders(data);
     }
   }
+
+  // async function fetchProducts() {
+  //   const { data, error } = await supabase.from("products").select("*");
+
+  //   if (error) {
+  //     alert(error.message);
+  //   } else {
+  //     console.log(data);
+  //   }
+  // }
 
   async function uploadImage(file) {
     if (!file) {
@@ -45,39 +57,6 @@ const SellerDashboard = () => {
     return supabase.storage.from("product-images").getPublicUrl(filename).data.publicUrl;
   }
   
-
-  // async function addProduct() {
-  //   if (!newProduct.imageFile) {
-  //     alert("Please upload an image");
-  //     return;
-  //   }
-
-  //   const imageUrl = await uploadImage(newProduct.image_url);
-  //   if (!imageUrl) {
-  //     return;
-  //   }
-
-  //   const productData = { ...newProduct, imageFile: imageUrl };
-  //   delete productData.image_url;
-
-  //   const { data, error } = await supabase
-  //     .from("products")
-  //     .insert([productData]);
-  //   if (error) {
-  //     alert(error.message);
-  //     console.log(error.message);
-  //     console.error(error);
-  //   } else {
-  //     setProducts([...products, data[0]]);
-  //     setNewProduct({
-  //       name: "",
-  //       description: "",
-  //       price: "",
-  //       imageFile: null,
-  //     });
-  //   }
-  // }
-
   async function addProduct() {
     if (!newProduct.imageFile) {
       alert("Please upload an image");
@@ -116,7 +95,8 @@ const SellerDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <>
+    <div className=" bg-gray-100 p-6">
       <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
         Seller Dashboard
       </h1>
@@ -183,6 +163,42 @@ const SellerDashboard = () => {
         </button>
       </div>
     </div>
+    <div className="max-w-4xl mx-auto bg-white text-gray-800 p-6 rounded-lg shadow-md mt-10 mb-10">
+      <h2 className="text-2xl font-semibold mb-4 ">
+        Orders
+      </h2>
+
+      {orders.length === 0 ? (
+        <p className="text-gray-600">
+          No orders found!
+        </p>
+      ):(
+        orders.map((order)=>(
+          <div key={order.id} className="border-b border-gray-700 pb-4 mb-4">
+            <h3 className="text-lg font-bold mb-2 text-gray-800">
+              Order #{order.id}
+            </h3>
+            <p className="text-gray-600 mb-2 ">
+              User ID: {order.user_id}
+            </p>
+            <p className="text-gray-600 mb-2 font-semibold">
+              Total: ${order.total_price}
+            </p>
+
+            <div className="mt-2 mb-2 pl-4">
+              {order.order_items.map((item, index)=>(
+                <>
+                <div className="text-sm text-gray-700 mb-1">
+                  -{item.price}
+                </div>
+                </>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+    </>
   );
 };
 

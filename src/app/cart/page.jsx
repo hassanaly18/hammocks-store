@@ -28,7 +28,7 @@ const CartPage = () => {
 
     const { data, error } = await supabase
       .from("cart")
-      .select("id, quantity, products(name, price, image_url)")
+      .select("id, product_id, quantity, products(name, price, image_url)")
       .eq("user_id", user.id);
 
     setLoading(false);
@@ -48,22 +48,22 @@ const CartPage = () => {
 
     setLoading(true);
 
-    const user = await supabase.auth.getUser();
+    const {data: userData} = await supabase.auth.getUser();
 
-    if(!user?.data?.user){
+    if(!userData.user){
       alert("Login to complete your order");
       setLoading(false);
       return;
     }
 
     const totalPrice = cartItems.reduce((acc, item)=>{
-      acc + item.products.price * item.products.quantity
-    })
+      return acc + item.products.price
+    }, 0)
 
     //Insert into orders table
     const {data: order, error: orderError} = await supabase.from("orders").insert([{
-      user_id: user.data.user.id,
-      total_price: 800,
+      user_id: userData.user.id,
+      total_price: totalPrice,
     }]).select().single();
 
     if(orderError){
@@ -87,7 +87,7 @@ const CartPage = () => {
       return;
     }
 
-    supabase.from("cart").delete().neq("id", "");
+    await supabase.from("cart").delete().eq("user_id", userData.user.id);
     setCartItems([]);
     setLoading(false);
     alert("Order completed successfully");
