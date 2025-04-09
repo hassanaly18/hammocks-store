@@ -2,12 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 const ProductsPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [search, setSearch] = useState("");
+  const [addingProduct, setAddingProduct] = useState(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     fetchProducts();
@@ -23,7 +27,8 @@ const ProductsPage = () => {
   }
 
   async function addToCart(productId) {
-    setLoading(true);
+    // setLoading(true);
+    setAddingProduct(productId);
 
     const {
       data: { user },
@@ -31,7 +36,8 @@ const ProductsPage = () => {
 
     if (!user) {
       alert("Login to add to cart");
-      setLoading(false);
+      // setLoading(false);
+      setAddingProduct(null);
       return;
     }
 
@@ -39,7 +45,8 @@ const ProductsPage = () => {
       .from("cart")
       .insert({ user_id: user.id, product_id: productId });
 
-    setLoading(false);
+    // setLoading(false);
+    setAddingProduct(null);
 
     if (error) {
       alert(error.message);
@@ -53,7 +60,7 @@ const ProductsPage = () => {
     setSearch(query);
 
     const filtered = products.filter((product) => {
-      product.name.toLowerCase().includes(query);
+      return product.name.toLowerCase().includes(query);
     });
     setFilteredProducts(filtered);
     console.log(filtered);
@@ -88,12 +95,22 @@ const ProductsPage = () => {
             <h2 className="text-lg font-semibold mt-4">{product.name}</h2>
             <p className="text-gray-600 mt-2">{product.description}</p>
             <p className="text-gray-600 font-bold mt-2">${product.price}</p>
-            <button
-              className="bg-blue-500 text-white w-full p-2 rounded cursor-pointer hover:bg-blue-700 mt-4"
-              onClick={() => addToCart(product.id)}
-            >
-              {loading ? "Adding to cart..." : "Add to cart"}
-            </button>
+
+            <div className="flex gap-2 mt-4">
+              <button
+                className="bg-blue-500 text-white flex-1 p-2 rounded cursor-pointer hover:bg-blue-700"
+                onClick={() => addToCart(product.id)}
+              >
+                {addingProduct === product.id
+                  ? "Adding to cart..."
+                  : "Add to cart"}
+              </button>
+              <button className="bg-green-500  text-white flex-1 p-2 rounded cursor-pointer hover:bg-green-800"
+              onClick={() => router.push(`/products/${product.id}`)}
+              >
+                View more
+              </button>
+            </div>
           </div>
         ))}
       </div>
